@@ -1,0 +1,107 @@
+{
+  "name": "vs-code-ext-mule-munit-helper",
+  "displayName": "vs-code-ext-mule-munit-helper",
+  "description": "Run and visualize MUnits from VSCode",
+  "version": "0.0.1",
+  "author": "ArthurSpark",
+  "publisher": "ArthurSpark",
+  "icon": "images/icon.png",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DasArthur/vs-code-ext-mule-munit-helper.git"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other", "Debuggers"
+  ],
+  "keywords": [
+    "mule",
+    "munit",
+    "mule4",
+    "munit4",
+    "mulesoft",
+    "munit-visualizer"
+  ],
+  "activationEvents": [],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "configuration": {
+      "type": "object",
+      "title": "MUnit",
+      "properties": {
+        "munit.attributes": {
+          "type": "string",
+          "default": "",
+          "description": "Munit attributes like -Denv=dev"
+        },
+        "munit.showWelcome": {
+          "type": "boolean",
+          "default": true,
+          "description": "Are attributes defined?"
+        }
+      }
+    },
+    "viewsContainers": {
+          "activitybar": [
+              {
+                  "id": "munitview",
+                  "title": "MUnit",
+                  "icon": "images/icon-action.svg"
+              }
+          ]
+      },
+      "views": {
+          "munitview": [
+              {
+                  "id": "munitview",
+                  "name": "MUnit"
+              }
+          ]
+      },
+      "viewsWelcome": [
+        {
+          "view": "munitview",
+          "contents": "To run MUnit tests, you need to configure the MUnit attributes.\n[Add MUnit Run Config](command:extension.addMunitRunConfig)",
+          "when": "config.munit.attributes == ''"
+        }
+      ],
+      "commands": [
+          {
+            "command": "extension.munit",
+            "title": "Run All MUnits"
+          },
+          {
+            "command": "extension.addMunitRunConfig",
+            "title": "Add MUnit Run Config"
+          }
+      ]
+  },
+  "scripts": {
+    "vscode:prepublish": "yarn run package",
+    "compile": "webpack",
+    "watch": "webpack --watch",
+    "package": "webpack --mode production --devtool hidden-source-map",
+    "compile-tests": "tsc -p . --outDir out",
+    "watch-tests": "tsc -p . -w --outDir out",
+    "pretest": "yarn run compile-tests && yarn run compile && yarn run lint",
+    "lint": "eslint src --ext ts",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@types/mocha": "^10.0.6",
+    "@types/node": "18.x",
+    "@typescript-eslint/eslint-plugin": "^6.19.1",
+    "@typescript-eslint/parser": "^6.19.1",
+    "eslint": "^8.56.0",
+    "typescript": "^5.3.3",
+    "ts-loader": "^9.5.1",
+    "webpack": "^5.90.0",
+    "webpack-cli": "^5.1.4",
+    "@vscode/test-cli": "^0.0.4",
+    "@vscode/test-electron": "^2.3.9"
+  }
+}
