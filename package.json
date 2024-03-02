@@ -25,8 +25,13 @@
     "mulesoft",
     "munit-visualizer"
   ],
-  "activationEvents": [],
-  "main": "./dist/extension.js",
+  "activationEvents": [
+    "workspaceContains:*.xml",
+    "workspaceContains:**/*.xml",
+    "onLanguage:xml",
+    "onLanguage:mule-xml"
+	],
+  "main": "./out/extension.js",
   "contributes": {
     "configuration": {
       "type": "object",
@@ -47,18 +52,19 @@
     "viewsContainers": {
           "activitybar": [
               {
-                  "id": "munitview",
+                  "id": "munitcontainer",
                   "title": "MUnit",
                   "icon": "images/icon-action.svg"
               }
           ]
       },
       "views": {
-          "munitview": [
-              {
-                  "id": "munitview",
-                  "name": "MUnit"
-              }
+          "munitcontainer": [
+            {
+              "id": "munitview",
+              "name": "MUnit",
+              "type": "webview"
+             }
           ]
       },
       "viewsWelcome": [
@@ -80,28 +86,22 @@
       ]
   },
   "scripts": {
-    "vscode:prepublish": "yarn run package",
-    "compile": "webpack",
-    "watch": "webpack --watch",
-    "package": "webpack --mode production --devtool hidden-source-map",
-    "compile-tests": "tsc -p . --outDir out",
-    "watch-tests": "tsc -p . -w --outDir out",
-    "pretest": "yarn run compile-tests && yarn run compile && yarn run lint",
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
     "lint": "eslint src --ext ts",
     "test": "vscode-test"
   },
   "devDependencies": {
-    "@types/vscode": "^1.85.0",
     "@types/mocha": "^10.0.6",
     "@types/node": "18.x",
+    "@types/vscode": "^1.85.0",
     "@typescript-eslint/eslint-plugin": "^6.19.1",
     "@typescript-eslint/parser": "^6.19.1",
-    "eslint": "^8.56.0",
-    "typescript": "^5.3.3",
-    "ts-loader": "^9.5.1",
-    "webpack": "^5.90.0",
-    "webpack-cli": "^5.1.4",
     "@vscode/test-cli": "^0.0.4",
-    "@vscode/test-electron": "^2.3.9"
+    "@vscode/test-electron": "^2.3.9",
+    "eslint": "^8.56.0",
+    "typescript": "^5.3.3"
   }
 }
