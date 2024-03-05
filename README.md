@@ -1,10 +1,10 @@
-# vs-code-ext-mule-munit-helper README
+# MUnit Launcher
 
-With this extension, you can easily run and manage your MUnit tests directly within the VS Code environment.
+With this extension, you can easily run and manage your MUnit tests directly within the VS Code
 
 ## Features
 
-- **Run MUnit Tests**: Launch MUnit tests directly from the VS Code command palette 
+- **Run MUnit Tests**: Launch MUnit tests directly from the VS Code
 
 ![Run MUnit Test](images/image01.png)
 
@@ -16,8 +16,11 @@ Before you can use this extension, ensure you have the following installed:
 - Maven
 
 ## Known Issues
+- Add code coverage
 
-For any known issues, please refer to the [issues section](https://github.com/your-username/vs-code-ext-mule-munit-helper/issues) of our GitHub repository.
+## Known Issues
+
+For any known issues, please refer to the [issues section](https://github.com/DasArthur/vs-code-ext-mule-munit-helper) of our GitHub repository.
 
 ---
 

@@ -1,8 +1,8 @@
 {
   "name": "vs-code-ext-mule-munit-helper",
-  "displayName": "vs-code-ext-mule-munit-helper",
-  "description": "Run and visualize MUnits from VSCode",
-  "version": "1.0.0",
+  "displayName": "Mule MUnit",
+  "description": "Run MUnits from VSCode",
+  "version": "1.0.1",
   "author": "ArthurSpark",
   "publisher": "ArthurSpark",
   "icon": "images/icon.png",
@@ -15,8 +15,7 @@
     "vscode": "^1.85.0"
   },
   "categories": [
-    "Other",
-    "Debuggers"
+    "Other"
   ],
   "keywords": [
     "mule",
@@ -24,7 +23,8 @@
     "mule4",
     "munit4",
     "mulesoft",
-    "munit-visualizer"
+    "munit-visualizer",
+    "mule"
   ],
   "activationEvents": [
     "workspaceContains:*.xml",
