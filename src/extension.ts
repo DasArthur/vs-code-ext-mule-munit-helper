@@ -2,7 +2,8 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 import { activityBarViewListTree } from './activityBarView/view';
-import { testRunner } from './validateYamlFile/testRunner';
+import { testRunner } from './testingUI/testRunner';
+import { showStatusBarCoverage } from './statusBar/showCoverage';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -10,13 +11,11 @@ import { testRunner } from './validateYamlFile/testRunner';
 
 export function activate(context: vscode.ExtensionContext) {
 
-    activityBarViewListTree(context);
+    // activityBarViewListTree(context);
 
     testRunner(context);
 
-    
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activate
+    showStatusBarCoverage(context);
 
 }
 

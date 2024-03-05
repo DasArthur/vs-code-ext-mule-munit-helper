@@ -1,5 +1,9 @@
 import * as vscode from 'vscode';
 import { getContentFromFilesystem, TestCase, testData, TestFile } from './testTree';
+import { runMunitTestSuiteForXMLFile } from './runAllTests';
+
+import * as fs from 'fs';
+import * as path from 'path';
 
 interface LineCoverage {
     executionCount: number;
@@ -41,10 +45,10 @@ export function testRunner(context: vscode.ExtensionContext) {
 
 	const runHandler = async (request: vscode.TestRunRequest, cancellation: vscode.CancellationToken) => {
 
-
 		if (!request.continuous) {
 			return startTestRun(request);
 		}
+
 
 		if (request.include === undefined) {
 			watchingTests.set('ALL', request.profile);
@@ -59,74 +63,82 @@ export function testRunner(context: vscode.ExtensionContext) {
 	};
 
 	const startTestRun = async (request: vscode.TestRunRequest) => {
-		const queue: { test: vscode.TestItem; data: TestCase }[] = [];
-		const run = ctrl.createTestRun(request);
-		// map of file uris to statements on each line:
-		const coveredLines = new Map<string, LineCoverage[]>();
 
 
-		const discoverTests = async (tests: Iterable<vscode.TestItem>) => {
+		if(request.include && request.include[0].id.match(/\.xml$/)) {
+			runMunitTestSuiteForXMLFile(request, ctrl);
+		}else if( request.include == undefined){
+			runMunitTestSuiteForXMLFile(request, ctrl);
+		}else {
+			const queue: { test: vscode.TestItem; data: TestCase }[] = [];
+			const run = ctrl.createTestRun(request);
+			// map of file uris to statements on each line:
+			const coveredLines = new Map<string, LineCoverage[]>();
 
-			
-			for (const test of tests) {
 
+			const discoverTests = async (tests: Iterable<vscode.TestItem>) => {
 
-				if (request.exclude?.includes(test)) {
-					continue;
-				}
+				for (const test of tests) {
 
-				const data = testData.get(test);
-				if (data instanceof TestCase) {
-					run.enqueued(test);
-					queue.push({ test, data });
-				} else {
-					if (data instanceof TestFile && !data.didResolve) {
-						await data.updateFromDisk(ctrl, test, context, params.key);
+					if (request.exclude?.includes(test)) {
+						continue;
 					}
 
-					await discoverTests(gatherTestItems(test.children));
+					const data = testData.get(test);
+					if (data instanceof TestCase) {
+						run.enqueued(test);
+						queue.push({ test, data });
+					} else {
+						if (data instanceof TestFile && !data.didResolve) {
+							await data.updateFromDisk(ctrl, test, context, params.key);
+						}
+
+						await discoverTests(gatherTestItems(test.children));
+					}
+
+					if (test.uri && !coveredLines.has(test.uri.toString())) {
+						try {
+						const lines = (await getContentFromFilesystem(test.uri)).split('\n');
+						coveredLines.set(
+							test.uri.toString(),
+							lines.map(() => ({ executionCount: 0 }))
+						);
+						} catch {
+						// ignored
+						}
+					}
+				}
+			};
+
+			const runTestQueue = async () => {
+				for (const { test, data } of queue) {
+					run.appendOutput(`Running ${test.id}\r\n`);
+					if (run.token.isCancellationRequested) {
+						run.skipped(test);
+					} else {
+						run.started(test);
+						await data.run(test, run, ctrl);
+					}
+
+					const lineNo = test.range!.start.line;
+					const fileCoverage = coveredLines.get(test.uri!.toString());
+					const lineInfo = fileCoverage?.[lineNo];
+					if (lineInfo) {
+						lineInfo.executionCount++;
+					}
+
+					run.appendOutput(`Completed ${test.id}\r\n`);
 				}
 
-				if (test.uri && !coveredLines.has(test.uri.toString())) {
-                    try {
-                      const lines = (await getContentFromFilesystem(test.uri)).split('\n');
-                      coveredLines.set(
-                        test.uri.toString(),
-                        lines.map(() => ({ executionCount: 0 }))
-                      );
-                    } catch {
-                      // ignored
-                    }
-                  }
-			}
-		};
+			
 
-		const runTestQueue = async () => {
-			for (const { test, data } of queue) {
-				run.appendOutput(`Running ${test.id}\r\n`);
-				if (run.token.isCancellationRequested) {
-					run.skipped(test);
-				} else {
-					run.started(test);
-					await data.run(test, run);
-				}
+				run.end();
+			};
 
-				const lineNo = test.range!.start.line;
-				const fileCoverage = coveredLines.get(test.uri!.toString());
-				const lineInfo = fileCoverage?.[lineNo];
-				if (lineInfo) {
-					lineInfo.executionCount++;
-				}
+			discoverTests(request.include ?? gatherTestItems(ctrl.items)).then(runTestQueue);
+		}
 
-				run.appendOutput(`Completed ${test.id}\r\n`);
-			}
-
-        
-
-			run.end();
-		};
-
-		discoverTests(request.include ?? gatherTestItems(ctrl.items)).then(runTestQueue);
+		
 	};
 
 	ctrl.refreshHandler = async () => {
@@ -134,8 +146,37 @@ export function testRunner(context: vscode.ExtensionContext) {
 		await Promise.all(getWorkspaceTestPatterns().map(({ pattern }) => findInitialFiles(ctrl, pattern)));
 	};
 
-	ctrl.createRunProfile('Run Munits', vscode.TestRunProfileKind.Run, runHandler, true, undefined, true);
+	const runProfile = ctrl.createRunProfile('Run Munits', vscode.TestRunProfileKind.Run, runHandler, true, undefined, false);
 
+	runProfile.configureHandler = async () => {
+		// Show a Quick Pick to let the user configure the test run
+		// Define the path to the configuration file within the .vscode directory
+
+		if(!vscode.workspace.workspaceFolders){
+			return;
+		}
+
+		const configFolderPath = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, '.vscode');
+		const configFilePath = path.join(configFolderPath, 'munitconfig.json');
+	
+		// Check if the .vscode directory exists, if not, create it
+		if (!fs.existsSync(configFolderPath)) {
+			fs.mkdirSync(configFolderPath);
+		}
+	
+		// Check if the file exists, if not, create it with default content
+		if (!fs.existsSync(configFilePath)) {
+			const defaultConfig = {
+				"_comment": "Use the 'arguments' property to specify additional command line arguments for the munit. e.g -Denv=dev",
+				"arguments": ""
+			};
+			fs.writeFileSync(configFilePath, JSON.stringify(defaultConfig, null, 2));
+		}
+	
+		// Open the configuration file in the editor
+		const document = await vscode.workspace.openTextDocument(configFilePath);
+		await vscode.window.showTextDocument(document);
+	};
 
 	getWorkspaceTestPatterns().forEach(({ pattern }) => {
         findInitialFiles(ctrl, pattern);
@@ -164,21 +205,6 @@ export function testRunner(context: vscode.ExtensionContext) {
 
 		const { file, data } = getOrCreateFile(ctrl, e.uri);
 		data.updateFromContents(ctrl, e.getText(), file, context, params.key);
-
-		// Construct the pattern for matching files
-		// const pattern = new vscode.RelativePattern(vscode.workspace.rootPath || '', 'src/test/munit/**/*.xml');
-
-		// 	// Use the vscode.workspace.match function to check if the document matches the pattern
-
-		// vscode.workspace.findFiles(pattern).then(files => {
-
-		// 	if (files.some(file => file.toString() === e.uri.toString())) {
-		// 		const { file, data } = getOrCreateFile(ctrl, e.uri);
-		// 		data.updateFromContents(ctrl, e.getText(), file, context, params.key );
-		// 	}
-
-		// });
-
 		
 	}
 
@@ -193,10 +219,12 @@ export function testRunner(context: vscode.ExtensionContext) {
 }
 
 function getOrCreateFile(controller: vscode.TestController, uri: vscode.Uri) {
+
 	const existing = controller.items.get(uri.toString());
 	if (existing) {
 		return { file: existing, data: testData.get(existing) as TestFile };
 	}
+
 
 	const file = controller.createTestItem(uri.toString(), uri.path.split('/').pop()!, uri);
 	controller.items.add(file);
@@ -232,27 +260,29 @@ async function findInitialFiles(controller: vscode.TestController, pattern: vsco
 	}
 }
 
-
 function startWatchingWorkspace(controller: vscode.TestController, fileChangedEmitter: vscode.EventEmitter<vscode.Uri>, context: vscode.ExtensionContext) {
-	return getWorkspaceTestPatterns().map(({ workspaceFolder, pattern }) => {
-		const watcher = vscode.workspace.createFileSystemWatcher(pattern);
+  return getWorkspaceTestPatterns().map(({ workspaceFolder, pattern }) => {
+    const watcher = vscode.workspace.createFileSystemWatcher(pattern);
 
-		watcher.onDidCreate(uri => {
-			getOrCreateFile(controller, uri);
-			fileChangedEmitter.fire(uri);
-		});
-		watcher.onDidChange(async uri => {
-			const { file, data } = getOrCreateFile(controller, uri);
-			if (data.didResolve) {
-				// Replace 'test' with 'file', which is the correct TestItem instance
-				await data.updateFromDisk(controller, file, context, "");
-			}
-			fileChangedEmitter.fire(uri);
-		});
-		watcher.onDidDelete(uri => controller.items.delete(uri.toString()));
+    watcher.onDidCreate(uri => {
+      getOrCreateFile(controller, uri);
+      fileChangedEmitter.fire(uri);
+    });
+    watcher.onDidChange(async uri => {
+      const { file, data } = getOrCreateFile(controller, uri);
+      if (data.didResolve) {
+        await data.updateFromDisk(controller, file, context, "");
+      }
+      fileChangedEmitter.fire(uri);
+    });
+    watcher.onDidDelete(uri => {
+      controller.items.delete(uri.toString());
+    });
 
-		findInitialFiles(controller, pattern);
+    findInitialFiles(controller, pattern);
 
-		return watcher;
-	});
+    context.subscriptions.push(watcher); // Ensure the watcher is registered with the extension context
+
+    return watcher;
+  });
 }

@@ -2,7 +2,7 @@
   "name": "vs-code-ext-mule-munit-helper",
   "displayName": "vs-code-ext-mule-munit-helper",
   "description": "Run and visualize MUnits from VSCode",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "author": "ArthurSpark",
   "publisher": "ArthurSpark",
   "icon": "images/icon.png",
@@ -15,7 +15,8 @@
     "vscode": "^1.85.0"
   },
   "categories": [
-    "Other", "Debuggers"
+    "Other",
+    "Debuggers"
   ],
   "keywords": [
     "mule",
@@ -30,60 +31,9 @@
     "workspaceContains:**/*.xml",
     "onLanguage:xml",
     "onLanguage:mule-xml"
-	],
+  ],
   "main": "./out/extension.js",
   "contributes": {
-    "configuration": {
-      "type": "object",
-      "title": "MUnit",
-      "properties": {
-        "munit.attributes": {
-          "type": "string",
-          "default": "",
-          "description": "Munit attributes like -Denv=dev"
-        },
-        "munit.showWelcome": {
-          "type": "boolean",
-          "default": true,
-          "description": "Are attributes defined?"
-        }
-      }
-    },
-    "viewsContainers": {
-          "activitybar": [
-              {
-                  "id": "munitcontainer",
-                  "title": "MUnit",
-                  "icon": "images/icon-action.svg"
-              }
-          ]
-      },
-      "views": {
-          "munitcontainer": [
-            {
-              "id": "munitview",
-              "name": "MUnit",
-              "type": "webview"
-             }
-          ]
-      },
-      "viewsWelcome": [
-        {
-          "view": "munitview",
-          "contents": "To run MUnit tests, you need to configure the MUnit attributes.\n[Add MUnit Run Config](command:extension.addMunitRunConfig)",
-          "when": "config.munit.attributes == ''"
-        }
-      ],
-      "commands": [
-          {
-            "command": "extension.munit",
-            "title": "Run All MUnits"
-          },
-          {
-            "command": "extension.addMunitRunConfig",
-            "title": "Add MUnit Run Config"
-          }
-      ]
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
@@ -97,11 +47,15 @@
     "@types/mocha": "^10.0.6",
     "@types/node": "18.x",
     "@types/vscode": "^1.85.0",
+    "@types/xml2js": "^0.4.14",
     "@typescript-eslint/eslint-plugin": "^6.19.1",
     "@typescript-eslint/parser": "^6.19.1",
     "@vscode/test-cli": "^0.0.4",
     "@vscode/test-electron": "^2.3.9",
     "eslint": "^8.56.0",
     "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "xml2js": "^0.6.2"
   }
 }

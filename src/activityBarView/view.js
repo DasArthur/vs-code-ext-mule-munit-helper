@@ -27,13 +27,11 @@ exports.activityBarViewListTree = void 0;
 const vscode = __importStar(require("vscode"));
 function activityBarViewListTree(context, outputChannel) {
     outputChannel.appendLine("get logged");
-    console.log("get logged");
     const treeDataProvider = new YourTreeDataProvider();
     vscode.window.registerTreeDataProvider('munitview', treeDataProvider);
     vscode.window.createTreeView('munitview', { treeDataProvider });
     const config = vscode.workspace.getConfiguration();
     const munitAttributes = config.get('munit.attributes', '');
-    console.log("get logged");
 }
 exports.activityBarViewListTree = activityBarViewListTree;
 class YourTreeDataProvider {
