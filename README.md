@@ -8,15 +8,28 @@ With this extension, you can easily run and manage your MUnit tests directly wit
 
 ![Run MUnit Test](images/image01.png)
 
+- **Configure Launch Arguments**
+
+![Run MUnit Test](images/image02.png)
+![Run MUnit Test](images/image03.png)
+![Run MUnit Test](images/image04.png)
+
+- **Launch all Tests**
+
+![Run MUnit Test](images/image05.png)
+
+
+
 ## Requirements
 
 Before you can use this extension, ensure you have the following installed:
 - MuleSoft Anypoint Studio and MUnit
 - Java JDK 8 or later
 - Maven
+    - To fetch nexus repo you have to update m2 file
 
-## Known Issues
-- Add code coverage
+## Future plans
+- Add code coverage 
 
 ## Known Issues
 

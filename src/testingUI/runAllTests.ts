@@ -72,7 +72,7 @@ export async function runMunitTestSuiteForXMLFile(request: vscode.TestRunRequest
 
               command += ` ${cmdlineargs}`;          
 
-              const execProcess = exec(command);
+              const execProcess = exec(command,{ timeout: 600000, maxBuffer: 1024 * 1024 * 20 }); // 5 min timeout and 20MB buffer
         
               execProcess.stdout?.on('data', (data) => {
                 run.appendOutput(data.replace(/\n/g, '\r\n'));

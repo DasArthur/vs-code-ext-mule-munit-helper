@@ -140,7 +140,8 @@ export class TestCase {
 
 					command += ` ${cmdlineargs}`;
 			
-					const execProcess = exec(command);
+					const execProcess = exec(command,{ timeout: 600000, maxBuffer: 1024 * 1024 * 20 }); // 20MB buffer
+
 		
 					execProcess.stdout?.on('data', (data) => {
 						options.appendOutput(data.replace(/\n/g, '\r\n'));
